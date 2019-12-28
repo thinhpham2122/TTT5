@@ -122,5 +122,5 @@ def run(games=25):
             student.model.save(f'keras_model/{name}_{str(int(game_n))}')
 
 
-name = 'best'
+name = 'best_11800'
 run()

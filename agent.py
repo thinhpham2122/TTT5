@@ -78,7 +78,7 @@ class Agent:
                 if done:
                     target = reward
                 else:
-                    target = min(reward + (self.gamma * max(next_outputs.pop(0))), 1)
+                    target = max(min(reward + (self.gamma * max(next_outputs.pop(0))), 1), -1)
                 target_f[action] = target
                 if i == 24:
                     states.append(np.array(state[0][:]))
