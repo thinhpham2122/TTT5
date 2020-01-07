@@ -16,36 +16,112 @@ class TTT5:
         if self.played <= 5:
             return 'played'
         win_condition = 4 if self.player == 1 else -4
-        if ((c_board[0] + c_board[1] + c_board[2] + c_board[3]) == win_condition or
-                (c_board[1] + c_board[2] + c_board[3] + c_board[4]) == win_condition or
-                (c_board[5] + c_board[6] + c_board[7] + c_board[8]) == win_condition or
-                (c_board[6] + c_board[7] + c_board[8] + c_board[9]) == win_condition or
-                (c_board[10] + c_board[11] + c_board[12] + c_board[13]) == win_condition or
-                (c_board[11] + c_board[12] + c_board[13] + c_board[14]) == win_condition or
-                (c_board[15] + c_board[16] + c_board[17] + c_board[18]) == win_condition or
-                (c_board[16] + c_board[17] + c_board[18] + c_board[19]) == win_condition or
-                (c_board[20] + c_board[21] + c_board[22] + c_board[23]) == win_condition or
-                (c_board[21] + c_board[22] + c_board[23] + c_board[24]) == win_condition or
+        if self.board[0]:
+            if ((c_board[0] + c_board[1] + c_board[2] + c_board[3]) == win_condition or
                 (c_board[0] + c_board[5] + c_board[10] + c_board[15]) == win_condition or
-                (c_board[5] + c_board[10] + c_board[15] + c_board[20]) == win_condition or
+                (c_board[0] + c_board[6] + c_board[12] + c_board[18]) == win_condition):
+                return 'win'
+
+        if self.board[1]:
+            if ((c_board[1] + c_board[2] + c_board[3] + c_board[4]) == win_condition or
                 (c_board[1] + c_board[6] + c_board[11] + c_board[16]) == win_condition or
+                (c_board[1] + c_board[7] + c_board[13] + c_board[19]) == win_condition):
+                return 'win'
+
+        if self.board[2]:
+            if (c_board[2] + c_board[7] + c_board[12] + c_board[17]) == win_condition:
+                return 'win'
+
+        if self.board[3]:
+            if ((c_board[3] + c_board[8] + c_board[13] + c_board[18]) == win_condition or
+                (c_board[3] + c_board[7] + c_board[11] + c_board[15]) == win_condition):
+                return 'win'
+
+        if self.board[4]:
+            if ((c_board[4] + c_board[9] + c_board[14] + c_board[19]) == win_condition or
+                (c_board[4] + c_board[8] + c_board[12] + c_board[16]) == win_condition):
+                return 'win'
+
+        if self.board[5]:
+            if ((c_board[5] + c_board[6] + c_board[7] + c_board[8]) == win_condition or
+                (c_board[5] + c_board[10] + c_board[15] + c_board[20]) == win_condition or
+                (c_board[5] + c_board[11] + c_board[17] + c_board[23]) == win_condition):
+                return 'win'
+
+        if self.board[6]:
+            if ((c_board[6] + c_board[7] + c_board[8] + c_board[9]) == win_condition or
                 (c_board[6] + c_board[11] + c_board[16] + c_board[21]) == win_condition or
-                (c_board[2] + c_board[7] + c_board[12] + c_board[17]) == win_condition or
-                (c_board[7] + c_board[12] + c_board[17] + c_board[22]) == win_condition or
-                (c_board[3] + c_board[8] + c_board[13] + c_board[18]) == win_condition or
-                (c_board[8] + c_board[13] + c_board[18] + c_board[23]) == win_condition or
-                (c_board[4] + c_board[9] + c_board[14] + c_board[19]) == win_condition or
-                (c_board[9] + c_board[14] + c_board[19] + c_board[24]) == win_condition or
-                (c_board[0] + c_board[6] + c_board[12] + c_board[18]) == win_condition or
-                (c_board[6] + c_board[12] + c_board[18] + c_board[24]) == win_condition or
-                (c_board[4] + c_board[8] + c_board[12] + c_board[16]) == win_condition or
-                (c_board[8] + c_board[12] + c_board[16] + c_board[20]) == win_condition or
-                (c_board[1] + c_board[7] + c_board[13] + c_board[19]) == win_condition or
-                (c_board[3] + c_board[7] + c_board[11] + c_board[15]) == win_condition or
-                (c_board[5] + c_board[11] + c_board[17] + c_board[23]) == win_condition or
+                (c_board[6] + c_board[12] + c_board[18] + c_board[24]) == win_condition):
+                return 'win'
+
+        if self.board[7]:
+            if (c_board[7] + c_board[12] + c_board[17] + c_board[22]) == win_condition:
+                return 'win'
+
+        if self.board[8]:
+            if ((c_board[8] + c_board[13] + c_board[18] + c_board[23]) == win_condition or
+                (c_board[8] + c_board[12] + c_board[16] + c_board[20]) == win_condition):
+                return 'win'
+
+        if self.board[9]:
+            if ((c_board[9] + c_board[14] + c_board[19] + c_board[24]) == win_condition or
                 (c_board[9] + c_board[13] + c_board[17] + c_board[21]) == win_condition):
-            return 'win'
-        elif self.played >= len(self.board):
+                return 'win'
+
+        if self.board[10]:
+            if (c_board[10] + c_board[11] + c_board[12] + c_board[13]) == win_condition:
+                return 'win'
+
+        if self.board[11]:
+            if (c_board[11] + c_board[12] + c_board[13] + c_board[14]) == win_condition:
+                return 'win'
+
+        if self.board[15]:
+            if (c_board[15] + c_board[16] + c_board[17] + c_board[18]) == win_condition:
+                return 'win'
+
+        if self.board[16]:
+            if (c_board[16] + c_board[17] + c_board[18] + c_board[19]) == win_condition:
+                return 'win'
+
+        if self.board[20]:
+            if (c_board[20] + c_board[21] + c_board[22] + c_board[23]) == win_condition:
+                return 'win'
+
+        if self.board[21]:
+            if (c_board[21] + c_board[22] + c_board[23] + c_board[24]) == win_condition:
+                return 'win'
+
+        # if ((c_board[0] + c_board[1] + c_board[2] + c_board[3]) == win_condition or
+        #         (c_board[1] + c_board[2] + c_board[3] + c_board[4]) == win_condition or
+        #         (c_board[5] + c_board[6] + c_board[7] + c_board[8]) == win_condition or
+        #         (c_board[6] + c_board[7] + c_board[8] + c_board[9]) == win_condition or
+        #         (c_board[10] + c_board[11] + c_board[12] + c_board[13]) == win_condition or
+        #         (c_board[11] + c_board[12] + c_board[13] + c_board[14]) == win_condition or
+        #         (c_board[15] + c_board[16] + c_board[17] + c_board[18]) == win_condition or
+        #         (c_board[16] + c_board[17] + c_board[18] + c_board[19]) == win_condition or
+        #         (c_board[20] + c_board[21] + c_board[22] + c_board[23]) == win_condition or
+        #         (c_board[21] + c_board[22] + c_board[23] + c_board[24]) == win_condition or
+        #         (c_board[0] + c_board[5] + c_board[10] + c_board[15]) == win_condition or
+        #         (c_board[5] + c_board[10] + c_board[15] + c_board[20]) == win_condition or
+        #         (c_board[1] + c_board[6] + c_board[11] + c_board[16]) == win_condition or
+        #         (c_board[6] + c_board[11] + c_board[16] + c_board[21]) == win_condition or
+        #         (c_board[2] + c_board[7] + c_board[12] + c_board[17]) == win_condition or
+        #         (c_board[7] + c_board[12] + c_board[17] + c_board[22]) == win_condition or
+        #         (c_board[3] + c_board[8] + c_board[13] + c_board[18]) == win_condition or
+        #         (c_board[8] + c_board[13] + c_board[18] + c_board[23]) == win_condition or
+        #         (c_board[4] + c_board[9] + c_board[14] + c_board[19]) == win_condition or
+        #         (c_board[9] + c_board[14] + c_board[19] + c_board[24]) == win_condition or
+        #         (c_board[0] + c_board[6] + c_board[12] + c_board[18]) == win_condition or
+        #         (c_board[6] + c_board[12] + c_board[18] + c_board[24]) == win_condition or
+        #         (c_board[4] + c_board[8] + c_board[12] + c_board[16]) == win_condition or
+        #         (c_board[8] + c_board[12] + c_board[16] + c_board[20]) == win_condition or
+        #         (c_board[1] + c_board[7] + c_board[13] + c_board[19]) == win_condition or
+        #         (c_board[3] + c_board[7] + c_board[11] + c_board[15]) == win_condition or
+        #         (c_board[5] + c_board[11] + c_board[17] + c_board[23]) == win_condition or
+        #         (c_board[9] + c_board[13] + c_board[17] + c_board[21]) == win_condition):
+        #     return 'win'
+        if self.played >= len(self.board):
             return 'draw'
         else:
             return 'played'
