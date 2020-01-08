@@ -8,23 +8,51 @@ import random
 from collections import deque
 
 
+rotate_location = [4, 9, 14, 19, 24, 3, 8, 13, 18, 23, 2, 7, 12, 17, 22, 1, 6, 11, 16, 21, 0, 5, 10, 15, 20]
+
+
+def rotate(board):
+    rotated_board = []
+    for location in rotate_location:
+        rotated_board.append(int(board[location]))
+    if len(board) > 25:
+        rotated_board.append(int(board[25]))
+    return rotated_board
+
+
+def get_rotate_boards(s, t):
+    states, targets = [], []
+    for i in range(len(s)):
+        os = s.popleft()
+        ot = t.popleft()
+        states.append(os[:])
+        targets.append(ot[:])
+        for rotation in range(3):
+            os = rotate(os)
+            ot = rotate(ot)
+            states.append(os[:])
+            targets.append(ot[:])
+    return states, targets
+
+
 class Agent:
     def __init__(self, state_size, action_size, model_name=None):
         self.state_size = state_size
         self.action_size = action_size
-        self.memory = []  # deque(maxlen=50000)
-        self.memory2 = deque(maxlen=30000)
+        self.memory = []
+        self.memory2 = []
         self.inventory = []
         self.model_name = model_name
-        self.gamma = 0.9
+        self.gamma = 0.95
+        self.data = 600_000
         self.epsilon = 1.0
-        self.epsilon_decay = 0.999973
         self.epsilon_min = .25
+        self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
+        print('stat:', self.data, self.epsilon_decay)
         if model_name:
             try:
                 print('loading model')
                 self.model = load_model(f'keras_model/{model_name}')
-            # self.epsilon = 0
             except:
                 print('fail to load model, creating new model')
                 self.model = self.model()
@@ -52,11 +80,11 @@ class Agent:
                         empty_index.append(i)
                 return empty_index[random.randrange(len(empty_index))]
         output = self.model.predict(state)
-        print(np.round(output[0][0:5], 2))
-        print(np.round(output[0][5:10], 2))
-        print(np.round(output[0][10:15], 2))
-        print(np.round(output[0][15:20], 2))
-        print(np.round(output[0][20:25], 2))
+        # print(np.round(output[0][0:5], 2))
+        # print(np.round(output[0][5:10], 2))
+        # print(np.round(output[0][10:15], 2))
+        # print(np.round(output[0][15:20], 2))
+        # print(np.round(output[0][20:25], 2))
         return np.argmax(output)
 
     def exp_replay(self):
@@ -69,21 +97,24 @@ class Agent:
             for [_, _, _, next_state, done] in event:
                 if not done:
                     next_states.append(next_state[0])
-        next_outputs = self.model.predict(np.array(next_states), verbose=1).tolist()
-        state_outputs = self.model.predict(np.array(current_states), verbose=1).tolist()
-        for e, event in enumerate(self.memory):
+        next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))  # .tolist()
+        state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
+        for event in self.memory:
             state = event[0][0]
-            target_f = state_outputs.pop(0)
-            for i, [_, action, reward, _, done] in enumerate(event):
+            target_f = state_outputs.popleft()
+            for [_, action, reward, _, done] in event:
                 if done:
                     target = reward
                 else:
-                    target = max(min(reward + (self.gamma * max(next_outputs.pop(0))), 1), -1)
+                    # target = reward + (self.gamma * max(next_outputs.popleft()))
+                    target = max(min(reward + (self.gamma * max(next_outputs.popleft())), 1), -1)
                 target_f[action] = target
-                if i == 24:
-                    states.append(np.array(state[0][:]))
-                    target_fs.append(np.array(target_f[:]))
+            states.append(np.array(state[0][:]))
+            target_fs.append(np.array(target_f[:]))
         for [s, t] in self.memory2:
             states.append(s[0][:])
             target_fs.append(t[:])
-        self.model.fit([states], [target_fs], epochs=1, verbose=1, batch_size=256)
+
+        states, target_fs = get_rotate_boards(deque(states), deque(target_fs))
+
+        self.model.fit([states], [target_fs], epochs=15, verbose=1, batch_size=256)
