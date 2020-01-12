@@ -13,7 +13,7 @@ def get_state(board_l, player):
     return [state_l]
 
 
-first = 2  # 1:ai first, 2:human first
+first = 1  # 1:ai first, 2:human first
 mode = 2  # 1:human, 2:AI
 name = 'h_120225_12'
 if mode == 2:
