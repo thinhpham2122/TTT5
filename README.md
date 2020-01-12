@@ -9,7 +9,7 @@ Game win condition: get 4 in a line in a 5 x 5 grid
 
 Package Requirements
 ------
-Tensorflow (CPU only):```pip3 install tensorflow```
+Tensorflow (CPU version):```pip3 install tensorflow```
 
 To play
 ------
