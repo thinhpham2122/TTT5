@@ -20,7 +20,7 @@ if mode == 2:
     model = load_model(f'keras_model/{name}')
 board = TTT5()
 end = False
-print_output = True
+print_output = False
 while not end:
     player_turn = board.player
     if player_turn == first:
