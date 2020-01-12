@@ -68,7 +68,6 @@ def get_events(state, board, player, ai):
             else:
                 events_l.append([state, i, reward, next_state, False][:])
     if win_action:
-        print(win_action)
         target = []
         for w in range(len(board)):
             if w in win_action:
@@ -79,15 +78,17 @@ def get_events(state, board, player, ai):
     return events_l, 1
 
 
-def run(games=25):
+def run():
     student = Agent(26, 25, model_name=name)
     game_n = 0
     while True:
+        games = 25 if student.epsilon <= student.epsilon_min else 4000
         for _ in range(games):
             board = TTT5()
             end = False
             game_n += 1
             turn = 0
+            print(game_n, len(student.memory), len(student.memory2), end='\r')
             while not end:
                 player_turn = int(board.player)
                 current_board = board.board[:]
@@ -105,22 +106,19 @@ def run(games=25):
                     student.memory2.append(events)
                     rewards = events[1]
                     reward = rewards[action]
-                print(f'{game_n}: {action} {ret} reward: {reward}')
-                board.print_board()
+                # print(f'{game_n}: {action} {ret} reward: {reward}')
+                # board.print_board()
                 if 'invalid' in ret:
                     break
-
                 if 'win' in ret or 'draw' in ret:
                     end = True
                 turn += 1
-        if len(student.memory) >= 55000:
-            student.exp_replay()
-        if len(student.memory) >= 80000:
-            student.epsilon = .4
-            del student.memory[0:25000]
-        if game_n % 200 == 0:
-            student.model.save(f'keras_model/{name}_{str(int(game_n))}')
+        student.exp_replay()
+        test = get_state([0]*25, 1)
+        start_move = np.argmax(student.model.predict(test))
+        student.model.save(f'keras_model/{name}_{str(int(game_n))}_{int(start_move)}')
 
 
-name = 'best_11800'
+
+name = 'h'
 run()

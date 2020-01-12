@@ -44,7 +44,7 @@ class Agent:
         self.inventory = []
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 600_000
+        self.data = 1_500_000
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -62,10 +62,13 @@ class Agent:
 
     def model(self):
         model = Sequential()
-        model.add(Dense(units=256, input_dim=self.state_size, activation="relu"))
+        model.add(Dense(units=512, input_dim=self.state_size, activation="relu"))
+        model.add(Dense(units=512, activation="relu"))
+        model.add(Dense(units=512, activation="relu"))
+        model.add(Dense(units=512, activation="relu"))
         model.add(Dense(units=256, activation="relu"))
         model.add(Dense(units=256, activation="relu"))
-        model.add(Dense(units=256, activation="relu"))
+        model.add(Dense(units=128, activation="relu"))
         model.add(Dense(self.action_size, activation="linear"))
         model.compile(loss="mse", optimizer=Adam(lr=0.001))
         return model
@@ -91,17 +94,18 @@ class Agent:
         states = []
         target_fs = []
         next_states = []
-        current_states = []
+        # current_states = []
         for event in self.memory:
-            current_states.append(event[0][0][0])
+            # current_states.append(event[0][0][0])
             for [_, _, _, next_state, done] in event:
                 if not done:
                     next_states.append(next_state[0])
         next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))  # .tolist()
-        state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
+        # state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
         for event in self.memory:
             state = event[0][0]
-            target_f = state_outputs.popleft()
+            # target_f = state_outputs.popleft()
+            target_f = [0] * 25
             for [_, action, reward, _, done] in event:
                 if done:
                     target = reward
@@ -117,4 +121,4 @@ class Agent:
 
         states, target_fs = get_rotate_boards(deque(states), deque(target_fs))
 
-        self.model.fit([states], [target_fs], epochs=15, verbose=1, batch_size=256)
+        self.model.fit([states], [target_fs], epochs=1, verbose=1, batch_size=8192)
