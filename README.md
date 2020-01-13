@@ -38,4 +38,4 @@ Moves that are invalid and loses the game are given -1 as reward. Moves that win
 
 Result
 ------
-After training about 1,500,000 states of the game, it is able to play better than a human, but it did not mastered the game.
+After training about 1,500,000 states of the game, it is able to play better than an average human, but it did not mastered the game.
