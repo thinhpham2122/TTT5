@@ -41,7 +41,6 @@ class Agent:
         self.action_size = action_size
         self.memory = []
         self.memory2 = []
-        self.inventory = []
         self.model_name = model_name
         self.gamma = 0.95
         self.data = 1_500_000
