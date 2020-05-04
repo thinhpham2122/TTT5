@@ -35,15 +35,21 @@ def get_rotate_boards(s, t):
     return states, targets
 
 
+class Node:
+    def __int__(self, state, reward, next_node_id):
+        self.state = state
+        self.reward = reward
+        self.next_node_id = next_node_id
+
+
 class Agent:
     def __init__(self, state_size, action_size, model_name=None):
         self.state_size = state_size
         self.action_size = action_size
-        self.memory = []
-        self.memory2 = []
+        self.tree = {}
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 1_500_000
+        self.data = 3_000_000
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -91,33 +97,62 @@ class Agent:
 
     def exp_replay(self):
         states = []
-        target_fs = []
+        targets = []
         next_states = []
+
+        for node_id in self.tree:
+            node = self.tree[node_id]
+            if node.rewards:
+                states.append(node.state[0])
+                targets.append(node.rewards)
+
+                for next_node_id in node.next_node_ids:
+                    if next_node_id:
+                        next_states.append(self.tree[next_node_id].state[0])
+
+        next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))
+
+        state_n = -1
+        for node_id in self.tree:
+            node = self.tree[node_id]
+            if node.rewards:
+                state_n += 1
+                for i, next_node_id in enumerate(node.next_node_ids):
+                    if next_node_id:
+                        targets[state_n][i] = self.gamma * max(next_outputs.popleft())
+                # print(node.state[0][:-1].reshape((5, 5)))
+                # print(np.array(targets[state_n]).reshape((5, 5)))
+                # print('')
+
+
+
         # current_states = []
-        for event in self.memory:
-            # current_states.append(event[0][0][0])
-            for [_, _, _, next_state, done] in event:
-                if not done:
-                    next_states.append(next_state[0])
-        next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))  # .tolist()
-        # state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
-        for event in self.memory:
-            state = event[0][0]
-            # target_f = state_outputs.popleft()
-            target_f = [0] * 25
-            for [_, action, reward, _, done] in event:
-                if done:
-                    target = reward
-                else:
-                    # target = reward + (self.gamma * max(next_outputs.popleft()))
-                    target = max(min(reward + (self.gamma * max(next_outputs.popleft())), 1), -1)
-                target_f[action] = target
-            states.append(np.array(state[0][:]))
-            target_fs.append(np.array(target_f[:]))
-        for [s, t] in self.memory2:
-            states.append(s[0][:])
-            target_fs.append(t[:])
+        # for event in self.memory:
+        #     # current_states.append(event[0][0][0])
+        #     for [_, _, _, next_state, done] in event:
+        #         if not done:
+        #             next_states.append(next_state[0])
+        # next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))  # .tolist()
+        # # state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
+        # for event in self.memory:
+        #     state = event[0][0]
+        #     # target_f = state_outputs.popleft()
+        #     target_f = [0] * 25
+        #     for [_, action, reward, _, done] in event:
+        #         if done:
+        #             target = reward
+        #         else:
+        #             # target = reward + (self.gamma * max(next_outputs.popleft()))
+        #             target = max(min(reward + (self.gamma * max(next_outputs.popleft())), 1), -1)
+        #         target_f[action] = target
+        #     states.append(np.array(state[0][:]))
+        #     target_fs.append(np.array(target_f[:]))
+        # for [s, t] in self.memory2:
+        #     states.append(s[0][:])
+        #     target_fs.append(t[:])
+        # states, target_fs = get_rotate_boards(deque(states), deque(target_fs))
 
-        states, target_fs = get_rotate_boards(deque(states), deque(target_fs))
+        self.model.fit([states], [targets], epochs=1, verbose=1, batch_size=8192)
 
-        self.model.fit([states], [target_fs], epochs=1, verbose=1, batch_size=8192)
+    def add_node(self, node_id, node):
+        self.tree[node_id] = node

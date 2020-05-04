@@ -5,21 +5,16 @@ import random
 
 
 def get_state(board, player):
-    if player == 1:
-        state = board[:]
-        state.append(-1)
-    else:
-        state = board[:]
-        state.append(1)
-    return np.array([state])
+    return np.array([np.append(board, player)])
 
 
 def get_next_state(board, player, ai):
     board_l = TTT5()
     for i in range(len(board)):
-        board_l.board = board[:]
+        board_l.board = list(board)
         board_l.player = player
         ret = board_l.play(i)
+
         if 'win' in ret:
             return None, ret
     board_l.board = board[:]
@@ -46,78 +41,109 @@ def get_reward(ret, next_ret):
         return 0
 
 
-def get_events(state, board, player, ai):
-    events_l = []
-    win_action = []
+def get_id(state):
+    mem_id = ''
+    for i in state[0]:
+        mem_id += str(i + 1)
+    return mem_id
+
+
+def get_next_node(state, model):
+    board = state[0][:-1]
+    player = state[0][-1]
+    nodes = []
+    node_ids = []
+    rewards = []
+
+    new_board = TTT5()
     for i in range(len(board)):
-        new_board = TTT5()
-        new_board.board = board[:]
+
+        if board[i]:  # invalid moves
+            nodes.append(None)
+            node_ids.append(None)
+            rewards.append(-1)
+            continue
+
+        new_board.board = list(board)
         new_board.player = player
         ret = new_board.play(i)
-        if 'invalid' in ret or 'draw' in ret:
-            reward = get_reward(ret, '')
-            events_l.append([state, i, reward, None, True][:])
-            continue
-        elif 'win' in ret:
-            win_action.append(i)
+        if 'draw' in ret or 'win' in ret:
+            nodes.append(None)
+            node_ids.append(None)
+            rewards.append(get_reward(ret, ''))
+
         else:
-            next_state, next_ret = get_next_state(new_board.board[:], int(new_board.player), ai)
+            next_state, next_ret = get_next_state(new_board.board[:], int(new_board.player), model)
             reward = get_reward(ret, next_ret)
             if 'win' in next_ret or 'draw' in next_ret:
-                events_l.append([state, i, reward, None, True][:])
+                nodes.append(None)
+                node_ids.append(None)
+                rewards.append(reward)
             else:
-                events_l.append([state, i, reward, next_state, False][:])
-    if win_action:
-        target = []
-        for w in range(len(board)):
-            if w in win_action:
-                target.append(1)
-            else:
-                target.append(-1)
-        return [state, target], 2
-    return events_l, 1
+                nodes.append(Node(next_state, None, None))
+                node_ids.append(get_id(next_state))
+                rewards.append(reward)
+    return nodes, rewards, node_ids
 
 
 def run():
     student = Agent(26, 25, model_name=name)
     game_n = 0
     while True:
-        games = 25 if student.epsilon <= student.epsilon_min else 4000
-        for _ in range(games):
+        games = 25 if student.epsilon <= student.epsilon_min else 5000
+        for g in range(games):
             board = TTT5()
             end = False
             game_n += 1
             turn = 0
-            print(game_n, len(student.memory), len(student.memory2), end='\r')
+            print(game_n, 'tree:', len(student.tree), student.epsilon, end='\r')
             while not end:
                 player_turn = int(board.player)
                 current_board = board.board[:]
                 state = get_state(current_board, player_turn)
+                current_node_id = get_id(state)
+
                 if turn == 0:
                     action = game_n % 25
                 else:
                     action = student.act(np.array(state))
+
                 ret = board.play(action)
-                events, mem_type = get_events(state, current_board, player_turn, student.model)
-                if mem_type == 1:
-                    student.memory.append(events)
-                    reward = events[action][2]
-                else:
-                    student.memory2.append(events)
-                    rewards = events[1]
-                    reward = rewards[action]
-                # print(f'{game_n}: {action} {ret} reward: {reward}')
-                # board.print_board()
+                reward = get_reward(ret, '')
+                if not (current_node_id in student.tree) or g % 1000 == 0:
+                    next_nodes, rewards, next_node_ids = get_next_node(state, student.model)
+                    current_node = Node(state, rewards, next_node_ids)
+
+                    student.add_node(current_node_id, current_node)
+                    for node_id, node in zip(next_node_ids, next_nodes):
+                        if node_id:
+                            student.add_node(node_id, node)
+
+                if g == 0:
+                    print(f'{game_n}: {action} {ret} reward: {reward}')
+                    board.print_board()
+
                 if 'invalid' in ret:
                     break
                 if 'win' in ret or 'draw' in ret:
                     end = True
                 turn += 1
+            # for node in student.tree:
+            #     print(node)
+            #     print(student.tree[node].state[0][:-1].reshape((5,5)))
+            #     print(student.tree[node].reward)
+            # exit()
         student.exp_replay()
         test = get_state([0]*25, 1)
         start_move = np.argmax(student.model.predict(test))
         student.model.save(f'keras_model/{name}_{str(int(game_n))}_{int(start_move)}')
 
+
+class Node:
+    def __init__(self, state, rewards, next_node_ids):
+        self.state = state
+        self.rewards = rewards
+        self.next_node_ids = next_node_ids
 
 
 name = 'h'
