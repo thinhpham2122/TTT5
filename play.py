@@ -4,23 +4,19 @@ from tensorflow.keras.models import load_model
 
 
 def get_state(board_l, player):
-    if player == 1:
-        state_l = board_l[:]
-        state_l.append(-1)
-    else:
-        state_l = board_l[:]
-        state_l.append(1)
+    state_l = board_l[:]
+    state_l.append(player)
     return [state_l]
 
 
 first = 1  # 1:ai first, 2:human first
 mode = 2  # 1:human, 2:AI
-name = 'Ai_model'
+name = 'h_150000'
 if mode == 2:
     model = load_model(f'keras_model/{name}')
 board = TTT5()
 end = False
-print_output = False
+print_output = True
 while not end:
     player_turn = board.player
     if player_turn == first:
