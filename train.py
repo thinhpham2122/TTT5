@@ -27,10 +27,10 @@ def get_id(state):
 
 
 def run():
-    student = Agent(26, 25, model_name=name)
+    student = Agent(26, 26, model_name=name)
     game_n = 0
     while True:
-        games = 25 if student.epsilon <= student.epsilon_min else 10000
+        games = 25 if student.epsilon <= student.epsilon_min else 100000
         for g in range(games):
             board = TTT5()
             end = False
@@ -45,9 +45,14 @@ def run():
                 current_board = board.board[:]
                 state = get_state(current_board, player_turn)
                 mem_id = get_id(state)
-                action = student.act(np.array(state), mem_id, g == 0)
-                ret = board.play(action)
-
+                action, value = student.act(np.array(state), mem_id, g == 0)
+                if action != None:
+                    ret = board.play(action)
+                if value:
+                    reward = value
+                    last_player = player_turn
+                    end = True
+                    continue
                 tem_mem.append([mem_id, state, action][:])
                 if g == 0:
                     print(f'{game_n}: {action} {ret} reward: {reward}')
@@ -76,5 +81,6 @@ def run():
         student.model.save(f'keras_model/{name}_{str(int(game_n))}')
 
 
-name = 'h'
+
+name = 'MCST'
 run()

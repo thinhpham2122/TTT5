@@ -11,7 +11,7 @@ def get_state(board_l, player):
 
 first = 1  # 1:ai first, 2:human first
 mode = 2  # 1:human, 2:AI
-name = 'h_150000'
+name = 'MCST_1100175'
 if mode == 2:
     model = load_model(f'keras_model/{name}')
 board = TTT5()
@@ -38,7 +38,7 @@ while not end:
                 print(np.round(output[0][10:15], 2))
                 print(np.round(output[0][15:20], 2))
                 print(np.round(output[0][20:25], 2))
-            action = np.argmax(output)
+            action = np.argmax(output[:25])
             ret = board.play(action)
             if 'invalid' in ret:
                 board.print_board()

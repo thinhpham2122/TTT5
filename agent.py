@@ -16,7 +16,7 @@ class Agent:
         self.tree = {}
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 2_500_000
+        self.data = 10_000_000
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -48,48 +48,58 @@ class Agent:
 
         if self.epsilon > self.epsilon_min and random.random() <= self.epsilon:
             if mem_id in self.tree:
-                if p:
-                    print('u')
                 mem = self.tree[mem_id]
-                return np.argmin(mem[1])
+                mask = (mem[0][0][:-1] == 0)
+                flip = sum(mem[1]) - mem[1]
+                prob = flip * mask / sum(flip)
+                if p:
+                    print('Explore')
+                    print(np.array(prob).reshape((5, 5)))
+                return np.where(np.random.multinomial(1, prob))[0][0], None
+
             if p:
-                print('random')
+                print('Random')
             empty_index = []
             for i in range(25):
                 if not state[0][i]:
                     empty_index.append(i)
-            return empty_index[random.randrange(len(empty_index))]
+            return empty_index[random.randrange(len(empty_index))], None
 
         if mem_id in self.tree:
-            if p:
-                print('q')
             mem = self.tree[mem_id]
             q = np.nan_to_num(mem[2] / mem[1])
-            return np.argmax(q)
+            if p:
+                print('Max Q')
+                print(q.reshape((5, 5)))
+            return np.argmax(q), None
 
-        if p:
-            print('predict')
-        output = self.model.predict(state)
-        # print(np.round(output[0][0:5], 2))
-        # print(np.round(output[0][5:10], 2))
-        # print(np.round(output[0][10:15], 2))
-        # print(np.round(output[0][15:20], 2))
-        # print(np.round(output[0][20:25], 2))
-        return np.argmax(output)
+        if len(self.memory) >= 5_000_000:
+            if p:
+                print('Predict leaf')
+            output = self.model.predict(state)
+            return None, output[0][-1]
+        else:
+            if p:
+                print('Random')
+            empty_index = []
+            for i in range(25):
+                if not state[0][i]:
+                    empty_index.append(i)
+            return empty_index[random.randrange(len(empty_index))], None
 
     def exp_replay(self):
         self.make_tree()
         states = []
-
+        targets = []
         for mem_id in self.tree:
             states.append(self.tree[mem_id][0][0])
 
-        targets = self.model.predict(np.array(states), verbose=1)
+        # targets = self.model.predict(np.array(states), verbose=1)
         for i, mem_id in enumerate(self.tree):
             mem = self.tree[mem_id]
-            for c, counter in enumerate(mem[1]):
-                if counter:
-                    targets[i][c] = mem[2][c] / mem[1][c]
+            targets.append(np.append(mem[1] / sum(mem[1]), max(np.nan_to_num(mem[2]/mem[1]))))
+            # print(mem[0][0][:-1].reshape((5,5)))
+            # print(targets[-1])
 
         # for s, t in zip(states, targets):
         #     print(s, t)
@@ -102,12 +112,12 @@ class Agent:
                 self.tree[mem_id][1][action] += 1
                 self.tree[mem_id][2][action] += reward
             else:
-                counters = np.zeros(self.action_size)
-                rewards = np.zeros(self.action_size)
+                counters = np.zeros(self.action_size-1)
+                rewards = np.zeros(self.action_size-1)
                 counters[action] = 1
                 rewards[action] = reward
                 for i, location in enumerate(state[0][:-1]):
                     if location:
-                        counters[i] = 10000000
-                        rewards[i] = -10000000
+                        counters[i] = 1
+                        rewards[i] = -1
                 self.tree[mem_id] = [state, counters, rewards]
