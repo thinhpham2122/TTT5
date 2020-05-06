@@ -54,6 +54,7 @@ def get_next_node(state, model):
     nodes = []
     node_ids = []
     rewards = []
+    win = False
 
     new_board = TTT5()
     for i in range(len(board)):
@@ -71,8 +72,9 @@ def get_next_node(state, model):
             nodes.append(None)
             node_ids.append(None)
             rewards.append(get_reward(ret, ''))
+            win = True
 
-        else:
+        elif not win:
             next_state, next_ret = get_next_state(new_board.board[:], int(new_board.player), model)
             reward = get_reward(ret, next_ret)
             if 'win' in next_ret or 'draw' in next_ret:
@@ -83,6 +85,17 @@ def get_next_node(state, model):
                 nodes.append(Node(next_state, None, None))
                 node_ids.append(get_id(next_state))
                 rewards.append(reward)
+        else:
+            nodes.append(None)
+            node_ids.append(None)
+            rewards.append(-1)
+
+    if win:
+        for action, r in enumerate(rewards):
+            if r != 1:
+                rewards[action] = -1
+                node_ids[action] = None
+                nodes[action] = None
     return nodes, rewards, node_ids
 
 
@@ -90,7 +103,7 @@ def run():
     student = Agent(26, 25, model_name=name)
     game_n = 0
     while True:
-        games = 25 if student.epsilon <= student.epsilon_min else 5000
+        games = 1 if student.epsilon <= student.epsilon_min else 10_000
         for g in range(games):
             board = TTT5()
             end = False
@@ -102,15 +115,12 @@ def run():
                 current_board = board.board[:]
                 state = get_state(current_board, player_turn)
                 current_node_id = get_id(state)
-
-                if turn == 0:
-                    action = game_n % 25
-                else:
-                    action = student.act(np.array(state))
+                action = student.act(np.array(state), g == 0)
 
                 ret = board.play(action)
                 reward = get_reward(ret, '')
-                if not (current_node_id in student.tree) or g % 1000 == 0:
+
+                if not (current_node_id in student.tree and student.tree[current_node_id].rewards and game_n % 200 != 0):
                     next_nodes, rewards, next_node_ids = get_next_node(state, student.model)
                     current_node = Node(state, rewards, next_node_ids)
 
@@ -118,6 +128,9 @@ def run():
                     for node_id, node in zip(next_node_ids, next_nodes):
                         if node_id:
                             student.add_node(node_id, node)
+
+                if any(r == 1 for r in student.tree[current_node_id].rewards):
+                    end = True
 
                 if g == 0:
                     print(f'{game_n}: {action} {ret} reward: {reward}')
@@ -135,7 +148,7 @@ def run():
             # exit()
         student.exp_replay()
         test = get_state([0]*25, 1)
-        start_move = np.argmax(student.model.predict(test))
+        start_move = np.argmax(student.model.predict(test)) + 1
         student.model.save(f'keras_model/{name}_{str(int(game_n))}_{int(start_move)}')
 
 

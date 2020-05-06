@@ -49,7 +49,7 @@ class Agent:
         self.tree = {}
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 3_000_000
+        self.data = 10_000_000
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -70,29 +70,26 @@ class Agent:
         model.add(Dense(units=512, input_dim=self.state_size, activation="relu"))
         model.add(Dense(units=512, activation="relu"))
         model.add(Dense(units=512, activation="relu"))
-        model.add(Dense(units=512, activation="relu"))
-        model.add(Dense(units=256, activation="relu"))
-        model.add(Dense(units=256, activation="relu"))
-        model.add(Dense(units=128, activation="relu"))
         model.add(Dense(self.action_size, activation="linear"))
         model.compile(loss="mse", optimizer=Adam(lr=0.001))
         return model
 
-    def act(self, state):
+    def act(self, state, print_allow):
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
             if random.random() <= self.epsilon:
+                if print_allow:
+                    print('Random')
                 empty_index = []
                 for i in range(25):
                     if not state[0][i]:
                         empty_index.append(i)
                 return empty_index[random.randrange(len(empty_index))]
+
         output = self.model.predict(state)
-        # print(np.round(output[0][0:5], 2))
-        # print(np.round(output[0][5:10], 2))
-        # print(np.round(output[0][10:15], 2))
-        # print(np.round(output[0][15:20], 2))
-        # print(np.round(output[0][20:25], 2))
+        if print_allow:
+            print('Predict')
+            print(output[0].reshape((5, 5)))
         return np.argmax(output)
 
     def exp_replay(self):
