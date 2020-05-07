@@ -23,8 +23,8 @@ def rotate(board):
 def get_rotate_boards(s, t):
     states, targets = [], []
     for i in range(len(s)):
-        os = s.popleft()
-        ot = t.popleft()
+        os = s.pop()
+        ot = t.pop()
         states.append(os[:])
         targets.append(ot[:])
         for rotation in range(3):
@@ -49,7 +49,7 @@ class Agent:
         self.tree = {}
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 10_000_000
+        self.data = 3_000_000
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -72,6 +72,7 @@ class Agent:
         model.add(Dense(units=512, activation="relu"))
         model.add(Dense(self.action_size, activation="linear"))
         model.compile(loss="mse", optimizer=Adam(lr=0.001))
+        model.summary()
         return model
 
     def act(self, state, print_allow):
@@ -120,36 +121,12 @@ class Agent:
                 # print(node.state[0][:-1].reshape((5, 5)))
                 # print(np.array(targets[state_n]).reshape((5, 5)))
                 # print('')
-
-
-
-        # current_states = []
-        # for event in self.memory:
-        #     # current_states.append(event[0][0][0])
-        #     for [_, _, _, next_state, done] in event:
-        #         if not done:
-        #             next_states.append(next_state[0])
-        # next_outputs = deque(self.model.predict(np.array(next_states), verbose=1))  # .tolist()
-        # # state_outputs = deque(self.model.predict(np.array(current_states), verbose=1))  # .tolist()
-        # for event in self.memory:
-        #     state = event[0][0]
-        #     # target_f = state_outputs.popleft()
-        #     target_f = [0] * 25
-        #     for [_, action, reward, _, done] in event:
-        #         if done:
-        #             target = reward
-        #         else:
-        #             # target = reward + (self.gamma * max(next_outputs.popleft()))
-        #             target = max(min(reward + (self.gamma * max(next_outputs.popleft())), 1), -1)
-        #         target_f[action] = target
-        #     states.append(np.array(state[0][:]))
-        #     target_fs.append(np.array(target_f[:]))
-        # for [s, t] in self.memory2:
-        #     states.append(s[0][:])
-        #     target_fs.append(t[:])
-        # states, target_fs = get_rotate_boards(deque(states), deque(target_fs))
-
+        states, targets = get_rotate_boards(states, targets)
         self.model.fit([states], [targets], epochs=1, verbose=1, batch_size=8192)
 
     def add_node(self, node_id, node):
-        self.tree[node_id] = node
+        if node_id in self.tree:
+            if node.rewards:
+                self.tree[node_id] = node
+        else:
+            self.tree[node_id] = node

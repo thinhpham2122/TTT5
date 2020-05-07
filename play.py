@@ -11,7 +11,7 @@ def get_state(board_l, player):
 
 first = 1  # 1:ai first, 2:human first
 mode = 2  # 1:human, 2:AI
-name = 'h_170000_13'
+name = 'a_230000_13'
 if mode == 2:
     model = load_model(f'keras_model/{name}')
 board = TTT5()
