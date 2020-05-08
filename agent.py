@@ -1,6 +1,6 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Conv2D, Flatten
 from tensorflow.keras.optimizers import Adam
 
 import numpy as np
@@ -35,6 +35,15 @@ def get_rotate_boards(s, t):
     return states, targets
 
 
+def get_conv2d_input(states):
+    inputs = []
+    for state in states:
+        broad = np.array(state[:25]).reshape((5, 5))
+        player = np.full((5, 5), state[-1])
+        inputs.append([broad, player])
+    return np.array(inputs)
+
+
 class Node:
     def __int__(self, state, reward, next_node_id):
         self.state = state
@@ -67,9 +76,9 @@ class Agent:
 
     def model(self):
         model = Sequential()
-        model.add(Dense(units=512, input_dim=self.state_size, activation="relu"))
-        model.add(Dense(units=512, activation="relu"))
-        model.add(Dense(units=512, activation="relu"))
+        model.add(Conv2D(64, (3, 3), input_shape=(5, 5, 2), padding='valid', activation='relu'))
+        model.add(Conv2D(64, (3, 3), padding='valid', activation='relu'))
+        model.add(Flatten())
         model.add(Dense(self.action_size, activation="linear"))
         model.compile(loss="mse", optimizer=Adam(lr=0.001))
         model.summary()
@@ -82,8 +91,12 @@ class Agent:
                 if print_allow:
                     print('Random')
                 empty_index = []
+                board = []
+                for i, loc in enumerate(state.flatten()):
+                    if i % 2 == 0:
+                        board.append(loc)
                 for i in range(25):
-                    if not state[0][i]:
+                    if not board[i]:
                         empty_index.append(i)
                 return empty_index[random.randrange(len(empty_index))]
 
@@ -117,11 +130,12 @@ class Agent:
                 state_n += 1
                 for i, next_node_id in enumerate(node.next_node_ids):
                     if next_node_id:
-                        targets[state_n][i] = self.gamma * max(next_outputs.popleft())
+                        targets[state_n][i] = min(max(max(next_outputs.popleft()), -1), 1)
                 # print(node.state[0][:-1].reshape((5, 5)))
                 # print(np.array(targets[state_n]).reshape((5, 5)))
                 # print('')
-        states, targets = get_rotate_boards(states, targets)
+        # states, targets = get_rotate_boards(states, targets)
+        # states = get_conv2d_input(states)
         self.model.fit([states], [targets], epochs=1, verbose=1, batch_size=8192)
 
     def add_node(self, node_id, node):

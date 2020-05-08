@@ -5,7 +5,12 @@ import random
 
 
 def get_state(board, player):
-    return np.array([np.append(board, player)])
+    state = []
+    for loc in board:
+        state.append(loc)
+        state.append(player)
+    state = np.array(state).reshape((5, 5, 2))
+    return np.array([state])
 
 
 def get_next_state(board, player, ai):
@@ -49,8 +54,11 @@ def get_id(state):
 
 
 def get_next_node(state, model):
-    board = state[0][:-1]
-    player = state[0][-1]
+    board = []
+    for i, loc in enumerate(state.flatten()):
+        if i % 2 == 0:
+            board.append(loc)
+    player = state[0][0][0][1]
     nodes = []
     node_ids = []
     rewards = []
@@ -159,5 +167,5 @@ class Node:
         self.next_node_ids = next_node_ids
 
 
-name = 'a'
+name = 'CNN'
 run()
