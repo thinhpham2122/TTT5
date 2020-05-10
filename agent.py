@@ -58,7 +58,8 @@ class Agent:
         self.tree = {}
         self.model_name = model_name
         self.gamma = 0.95
-        self.data = 3_000_000
+        self.data = 2_500_000
+        self.save_tree_bool = True
         self.epsilon = 1.0
         self.epsilon_min = .25
         self.epsilon_decay = float(np.e)**float(np.log(self.epsilon_min/self.epsilon)/self.data)
@@ -76,9 +77,10 @@ class Agent:
 
     def model(self):
         model = Sequential()
-        model.add(Conv2D(64, (3, 3), input_shape=(5, 5, 2), padding='valid', activation='relu'))
-        model.add(Conv2D(64, (3, 3), padding='valid', activation='relu'))
+        model.add(Conv2D(256, (5, 5), input_shape=(5, 5, 2), padding='valid', activation='relu'))
+        # model.add(Conv2D(256, (3, 3), padding='valid', activation='relu'))
         model.add(Flatten())
+        model.add(Dense(256, activation="relu"))
         model.add(Dense(self.action_size, activation="linear"))
         model.compile(loss="mse", optimizer=Adam(lr=0.001))
         model.summary()
@@ -107,6 +109,9 @@ class Agent:
         return np.argmax(output)
 
     def exp_replay(self):
+        if self.save_tree_bool:
+            self.save_tree()
+
         states = []
         targets = []
         next_states = []
@@ -144,3 +149,15 @@ class Agent:
                 self.tree[node_id] = node
         else:
             self.tree[node_id] = node
+
+    def save_tree(self):
+        np.save('tree/tree', self.tree)
+        print('tree saved')
+
+    def load_tree(self):
+        try:
+            self.tree = np.load('tree/tree.npy', allow_pickle=True).item()
+            print('load tree successful')
+        except:
+            self.tree = {}
+            print('fail to load tree')

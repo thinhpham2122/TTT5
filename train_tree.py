@@ -110,9 +110,11 @@ def get_next_node(state, model):
 def run():
     student = Agent(26, 25, model_name=name)
     student.load_tree()
+    student.save_tree_bool = False
+    student.epsilon = student.epsilon_min
     game_n = 0
     while True:
-        games = 1 if student.epsilon <= student.epsilon_min else 10_000
+        games = 1 if student.epsilon <= student.epsilon_min else 1
         for g in range(games):
             board = TTT5()
             end = False
